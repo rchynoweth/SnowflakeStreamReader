@@ -64,11 +64,11 @@ class SnowflakeConnect():
         ALLOW_OVERLAPPING_EXECUTION = FALSE -- if they overlap then we may get duplicates from the stream if the previous DML is not complete 
         USER_TASK_MANAGED_INITIAL_WAREHOUSE_SIZE = '{snowflake_table.task_warehouse_size}' -- using Snowflake Serverless compute 
         AS 
-          COPY INTO @{stage_name}/{database}/{schema}/{table_name}
+          COPY INTO @{stage_name}/{database_name}/{schema_name}/{table_name}
           FROM (
           SELECT OBJECT_CONSTRUCT(*) as row_value FROM (SELECT *, current_timestamp() as load_datetime FROM {table_name}_stream )
               )
-          partition by ('year=' || to_varchar(current_date(), 'YYYY') || '/month=' || to_varchar(current_date(), 'MM') || '/day=' || to_varchar(current_date(), 'DD')) -- set it up in the /yyyy/mm/dd format for autoloader
+          PARTITION BY ('year=' || to_varchar(current_date(), 'YYYY') || '/month=' || to_varchar(current_date(), 'MM') || '/day=' || to_varchar(current_date(), 'DD')) -- set it up in the /yyyy/mm/dd format for autoloader
           include_query_id=true;  -- Ensures that each file we write has a unique name which is required for auto loader  
         
     """)
@@ -78,12 +78,7 @@ class SnowflakeConnect():
     self.run_query(f"USE SCHEMA {snowflake_namespace.snowflake_schema}")
     
     file_query_id = self.create_file_format(snowflake_namespace.file_format_name, snowflake_namespace.file_format_type)
-    stage_query_id = self.create_external_stage(stage_name=snowflake_namespace.stage_name, 
-                                                file_format_name=snowflake_namespace.file_format_name, 
-                                                sas_token=snowflake_namespace.sas_token, 
-                                                storage_account_name=snowflake_namespace.storage_account_name, 
-                                                container_name=snowflake_namespace.container_name, 
-                                                additional_path=snowflake_namespace.additional_path)
+    stage_query_id = self.create_external_stage(snowflake_namespace)
     return file_query_id, stage_query_id
   
   
