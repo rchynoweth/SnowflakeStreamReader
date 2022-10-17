@@ -102,12 +102,25 @@ sfNamespace = SnowflakeNamespace(namespace_config)
 # COMMAND ----------
 
 # DBTITLE 1,Add tables to database object 
-t1 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_stream_table1", merge_keys=['id'])
-t2 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_stream_table2", merge_keys=['id', 'id2'])
-t3 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_stream_table3", merge_keys=['id'])
+t1 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_customer", merge_keys=['c_custkey'])
+t2 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_lineitem", merge_keys=['l_orderkey', 'l_linenumber'])
+t3 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_nation", merge_keys=['n_nationkey'])
+t4 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_orders", merge_keys=['o_orderkey'])
+t5 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_part", merge_keys=['p_partkey'])
+t6 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_partsupp", merge_keys=['ps_partkey', 'ps_suppkey'])
+t7 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_region", merge_keys=['r_regionkey'])
+t8 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_supplier", merge_keys=['s_suppkey'])
+
+
+
 sfNamespace.add_table(t1)
 sfNamespace.add_table(t2)
 sfNamespace.add_table(t3)
+sfNamespace.add_table(t4)
+sfNamespace.add_table(t5)
+sfNamespace.add_table(t6)
+sfNamespace.add_table(t7)
+sfNamespace.add_table(t8)
 
 # COMMAND ----------
 
@@ -158,35 +171,24 @@ display(append_df)
 
 # COMMAND ----------
 
-snowflakeStreamer.write_append_only_stream(append_df, t1.table_name, checkpoint_path)
-
-# COMMAND ----------
-
-if reset:
-  sleep(10)
-
-display(spark.sql(f"select * from {t1.table_name}"))
-
-# COMMAND ----------
-
 # MAGIC %md
 # MAGIC ### Merge CDC Tables - replicates tables in Snowflake
 
 # COMMAND ----------
 
-checkpoint_path = snowflakeStreamer.get_table_checkpoint_location(t2, sfNamespace)
-schema_path = snowflakeStreamer.get_table_schema_location(t2, sfNamespace)
-data_path = snowflakeStreamer.get_data_path(t2, sfNamespace)
+checkpoint_path = snowflakeStreamer.get_table_checkpoint_location(t1, sfNamespace)
+schema_path = snowflakeStreamer.get_table_schema_location(t1, sfNamespace)
+data_path = snowflakeStreamer.get_data_path(t1, sfNamespace)
 
 # COMMAND ----------
 
 dbutils.fs.rm(checkpoint_path, True)
 dbutils.fs.rm(schema_path, True)
-spark.sql(f"DROP TABLE IF EXISTS {t2.table_name}")
+spark.sql(f"DROP TABLE IF EXISTS {t1.table_name}")
 
 # COMMAND ----------
 
-merge_df = snowflakeStreamer.read_merge_stream(dir_location=data_path, schema_path=schema_path, merge_keys=t2.get_merge_keys_as_string())
+merge_df = snowflakeStreamer.read_merge_stream(dir_location=data_path, schema_path=schema_path, merge_keys=t1.get_merge_keys_as_string())
 
 # COMMAND ----------
 
@@ -203,7 +205,7 @@ if reset:
 
 # COMMAND ----------
 
-display(spark.sql(f"select * from {t2.table_name}"))
+display(spark.sql(f"select * from {t1.table_name} where c_custkey >= 150000"))
 
 # COMMAND ----------
 
