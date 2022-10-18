@@ -1,17 +1,19 @@
 # Melt Stream
 
 
-The Snowflake Spark connector is a great option for reading from and writing data to Snowflake, however, for larger data sizes it can be a bottle. It is recommended that for larger data sizes that users instead initial copy to an external stage from Snowflake as files, then use Databricks Auto Loader to read the staged files. This process helps automate this process by setting up CDC streams. If datasets are smaller then full table copies could be more simple.  
+The Snowflake Spark connector is a great option for reading from and writing data to Snowflake, however, for larger data sizes it can be a bottlenext. It is recommended that for larger data sizes that users instead initial copy to an external stage from Snowflake as files, then use Databricks Auto Loader to read the staged files. This process helps automate this process by setting up CDC streams. If datasets are smaller then full table copies could be more simple.  
 
 The goal of this notebook is to create a "stream" of CDC changes out of Snowflake to cloud storage. It will provide at most two tables:
 1. Append only Delta table of CDC changes 
     - Please note that we add `load_datetime` to the published files so that we can drop duplicate changes across files  
 1. Delta table that maintains current state using merge keys  
+    - Merging the data from a CDC will replicate Snowflake tables to Delta Lake and will keep the tables consistent. 
+    - Snowflake Task latency will control the lag between Snowflake and Delta.  
 
 
 ## Usage Notes  
 
-This is not a streaming solution and should not be advised as "good" architecture. This is help alliviate the pain of trying to load data out of Snowflake in a scalable and repeatable fashion. 
+This is not a streaming solution and should not be advised as "good" architecture. This is help alliviate the pain of trying to load data out of Snowflake in a scalable and repeatable fashion. This should be considered a solution when re-architecting the data ingestion and data etl process is not up for negotiation but there is a desire to improve the advanced analytics development experience. 
 
 - This process is set at the schema level, which means that you will need to have different stages and file formats for each schema you are accessing. 
 - By default streams will be named `<table_name>_stream`
@@ -27,15 +29,37 @@ This is not a streaming solution and should not be advised as "good" architectur
 ## Using a Configuration File   
 
 Using this framework, engineers can easily create namespace and table objects. The namespace object (`SnowflakeNamespace`) can have a collection of table objects (`SnowflakeTable`). To streamline and make this a more simple process, users can provide a json configuration file that looks like the example below. You will notice that many of the parameters to the database object are provided via widgets in this notebook.   
+
+Required Parameters:
+- snowflake_database: the database to which namespace objects (file format, stages, etc) are created in. 
+- snowflake_schema: the schema to which namespace objects (file format, stages, etc) are created in. 
+- stage_name 
+- file_format_name 
+- file_format_type: must be 'json' at this time. 
+- tables
+
+Optional Namespace Parameters: 
+- s3_bucket: aws only
+- storage_account_name: azure only
+- container_name: azure only
+- sas_token: azure only
+- storage_integration: required for aws and optional for azure. If provided then this will be used over the sas_token. 
+
+Optional Table Parameters:
+- enabled: default to true 
+- merge_keys: if they are not provided then append only streams are supported but not able to perform merges 
+
 ```json
 {
     "snowflake_database":"my_database",
     "snowflake_schema": "my_schema",
     "stage_name": "my_snowflake_stage_name",
+    "s3_bucket": "my_bucket_name",
     "storage_account_name": "myadlsgen2", 
     "container_name": "mystoragecontainer",
     "additional_path": "/my/dir/in/adls",
     "sas_token": "storage_sas_token",
+    "storage_integration": "name_of_existing_storage_integration",
     "file_format_name": "my_snowflake_file_format_name",
     "file_format_type": "json",
     "tables": [
@@ -45,7 +69,8 @@ Using this framework, engineers can easily create namespace and table objects. T
             "table_name": "table_name",
             "merge_keys": ["id"],
             "task_schedule": "1 MINUTE",
-            "task_warehouse_size": "XSMALL"
+            "task_warehouse_size": "XSMALL",
+            "enabled": true
         },
         {
             "database_name":"my_database",
@@ -53,7 +78,8 @@ Using this framework, engineers can easily create namespace and table objects. T
             "name": "table_name2",
             "merge_keys": ["id"],
             "task_schedule": "1 MINUTE",
-            "task_warehouse_size": "SMALL"
+            "task_warehouse_size": "SMALL",
+            "enabled": false
         },
         {
             "database_name":"my_database",
@@ -61,7 +87,8 @@ Using this framework, engineers can easily create namespace and table objects. T
             "name": "table_name3",
             "merge_keys": ["id"],
             "task_schedule": "5 MINUTE",
-            "task_warehouse_size": "XSMALL"
+            "task_warehouse_size": "XSMALL",
+            "enabled": true
         }
     ]
 }
@@ -141,4 +168,5 @@ AS
 
 
 
-  
+## Development 
+Please submit feature requests and issues through github. 
