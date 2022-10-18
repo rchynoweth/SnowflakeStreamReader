@@ -22,11 +22,6 @@ data_path = "abfss://snowflakedemo@racadlsgen2.dfs.core.windows.net/cdc_demo"
 # COMMAND ----------
 
 # DBTITLE 1,List databases, schemas, and tables
-# t1 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_stream_table1", merge_keys=['id'])
-# t2 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_stream_table2", merge_keys=['id', 'id2'])
-# t3 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_stream_table3", merge_keys=['id'])
-# table_list = [t1,t2,t3]
-
 # temporary until python inports work for dlt
 class SnowflakeTable():
   def __init__(self, database_name, schema_name, table_name, merge_keys):
@@ -48,10 +43,7 @@ tables = [t1,t2,t3,t4,t5,t6,t7,t8]
 
 # COMMAND ----------
 
-### In the Spark Structured Streaming example, we needed to use a window function 
-##### to find the latest row by key(s) if we were loading multiple files 
-##### with the built-in support for scd type 1 tables which are ordered by
-##### a datetime column makes this process simple.  
+
 
 
 # merge_keys = microBatchDF.select("merge_keys").first().merge_keys.split(",")  
@@ -96,6 +88,13 @@ def generate_tables(tbl):
 # DBTITLE 1,Pass the list of table tuples to the function 
 for t in tables:
   generate_tables(t)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC A function that can be used to merge data into a delta table from a Snowflake stream cdc source. 
+# MAGIC 
+# MAGIC In the Spark Structured Streaming example, we needed to use a window function to find the latest row by key(s) if we were loading multiple files with the built-in support for scd type 1 tables which are ordered bya datetime column makes this process simple.  
 
 # COMMAND ----------
 

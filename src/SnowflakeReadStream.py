@@ -4,6 +4,30 @@
 # MAGIC 
 # MAGIC 
 # MAGIC The configuration is pretty standard for a widget based approach. If you are using a json config file or if you are using environment variables then it may not be required. 
+# MAGIC 
+# MAGIC 
+# MAGIC **Example Notebook Widgets**: 
+# MAGIC - `adlsLocation`: this is the directory that the data will be written to. This is used in the Snowflake Stage definition and can be used to read the files using Auto Loader. 
+# MAGIC   - This value should only include the container i.e. `abfss://container_name@storage_account_name.dfs.core.windows.net`. 
+# MAGIC   - If you wish to include directory paths then it should be provided in the `stage_path` widget.  
+# MAGIC - `databricksSchema`: the databricks schema to save data to as tables 
+# MAGIC - `secretScope`: the name of the secret scope to be used 
+# MAGIC - `snowflakeAccount`: the snowflake account to use  
+# MAGIC   - If your URL is `https://abc123.snowflakecomputing.com/` then the value is `abc123`  
+# MAGIC   - If your URL is `https://app.snowflake.com/us-west-2/abc123/` then the value is `abc123`  
+# MAGIC - `snowflakeDatabase`: Snowflake database to use   
+# MAGIC - `snowflakeSchema`: Snowflake schema to use   
+# MAGIC - `stagePath`: the additional path that you want to use for your Snowflake stage. If not provided then the stage will unload data to the base directory of the storage container.  
+# MAGIC   - example: `stagePath = '/my/dir'` and you have a table `my_database.my_schema.my_table` then the data will be available at the following location: `abfss://container_name@storage_account_name.dfs.core.windows.net/my/dir/my_database/my_schema/my_table/year=yyyy/month=mm/day=dd`   
+# MAGIC   - example: `stagePath = ''` and you have a table `my_database.my_schema.my_table` then the data will be available at the following location: `abfss://container_name@storage_account_name.dfs.core.windows.net/my_database/my_schema/my_table/year=yyyy/month=mm/day=dd`   
+# MAGIC - `fileFormatName`: name of the file format you want to create.  
+# MAGIC 
+# MAGIC 
+# MAGIC 
+# MAGIC **Required Secrets**:  
+# MAGIC - snowflakeSasToken: the sas token that is used to authenticate against ADLS from Snowflake   
+# MAGIC - snowflake_user: the username to connect to snowflake   
+# MAGIC - snowflake_password: the password to connect to snowflake   
 
 # COMMAND ----------
 

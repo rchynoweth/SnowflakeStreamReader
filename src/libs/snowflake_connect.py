@@ -21,7 +21,7 @@ class SnowflakeConnect():
     return self.run_query(f"CREATE OR REPLACE FILE FORMAT {name} TYPE = {type};")
     
     
-  def create_external_stage(self, snowflake_namespace):
+  def create_external_azure_stage(self, snowflake_namespace):
     stage_name=snowflake_namespace.stage_name
     file_format_name=snowflake_namespace.file_format_name
     sas_token=snowflake_namespace.sas_token
@@ -36,8 +36,26 @@ class SnowflakeConnect():
         CREDENTIALS = (AZURE_SAS_TOKEN = '{sas_token}')
         FILE_FORMAT = {file_format_name}
     """)
+
     
+  def create_external_stage(self, snowflake_namespace):
+    additional_path=snowflake_namespace.additional_path 
+    additional_path = "" if additional_path is None else additional_path 
+    stage_url = ""
     
+    if (snowflake_namespace.container_name is not None) and (snowflake_namespace.storage_account_name is not None): # this means it is azure 
+      stage_url = f'azure://{storage_account_name}.blob.core.windows.net/{container_name}/{additional_path}'
+    elif snowflake_namespace.s3_bucket is not None: # aws 
+      stage_url = f's3://{snowflake_namespace.s3_bucket}/{additional_path}'
+
+    return self.run_query(f"""
+        CREATE OR REPLACE STAGE {stage_name}
+        URL = {stage_url}
+        storage_integration = {snowflake_namespace.storage_integration}
+        FILE_FORMAT = {snowflake_namespace.file_format_name}
+    """)
+
+
   def create_snowflake_stream(self, snowflake_table):
     database_name = snowflake_table.database_name
     schema_name = snowflake_table.schema_name 
@@ -77,8 +95,15 @@ class SnowflakeConnect():
     self.run_query(f"USE DATABASE {snowflake_namespace.snowflake_database}")
     self.run_query(f"USE SCHEMA {snowflake_namespace.snowflake_schema}")
     
+    stage_query_id = None
     file_query_id = self.create_file_format(snowflake_namespace.file_format_name, snowflake_namespace.file_format_type)
-    stage_query_id = self.create_external_stage(snowflake_namespace)
+    
+    if snowflake_namespace.storage_integration is None:
+      stage_query_id = self.create_external_azure_stage(snowflake_namespace)
+    elif snowflake_namespace.storage_integration is not None:
+      stage_query_id = self.create_external_stage(snowflake_namespace)
+
+    
     return file_query_id, stage_query_id
   
   
@@ -91,8 +116,10 @@ class SnowflakeConnect():
   
     
   def table_setup(self, snowflake_table, snowflake_namespace):
+    task_status = 'SUSPEND' if snowflake_table.enabled == False else 'RESUME'
+    
     stream_query_id = self.create_snowflake_stream(snowflake_table)
     task_query_id = self.create_snowflake_task(snowflake_table, snowflake_namespace)
-    self.set_task_status(snowflake_table=snowflake_table, status='RESUME')
+    self.set_task_status(snowflake_table=snowflake_table, status=task_status)
     return stream_query_id, task_query_id
   

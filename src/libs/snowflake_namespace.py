@@ -1,6 +1,5 @@
 class SnowflakeNamespace():
 
-#   def __init__(self, file_format_name, sas_token, stage_name, storage_account_name, container_name, snowflake_database, snowflake_schema, additional_path = None):
   def __init__(self, config=None, config_file=None):
     # unable to load constructors in python
     # this is a workaround to either have config dict or config file 
@@ -11,15 +10,25 @@ class SnowflakeNamespace():
     
     self.file_format_type = 'JSON' # only support JSON at this time 
     self.file_format_name=config.get('file_format_name')
-    self.sas_token=config.get('sas_token') 
     self.stage_name=config.get('stage_name')
-    self.storage_account_name=config.get('storage_account_name')
-    self.container_name=config.get('container_name')
     self.additional_path=config.get('additional_path') 
     # these values for snowflake database and schema are for the stage and file format creation not for tables
     self.snowflake_database=config.get('snowflake_database')
     self.snowflake_schema=config.get('snowflake_schema')
     self.set_tables(config.get('tables')) 
+    
+    self.set_stage_details(config)
+    
+  def set_stage_details(self, config):
+    # storage information - Azure
+    self.sas_token=config.get('sas_token') 
+    self.storage_account_name=config.get('storage_account_name')
+    self.container_name=config.get('container_name')
+    
+    # storage information - all clouds
+    self.storage_integration = config.get('storage_aws_role_arn')
+
+
     
   def set_tables(self, table_list):
     self.tables = {}
