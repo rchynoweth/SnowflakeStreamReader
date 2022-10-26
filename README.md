@@ -11,6 +11,12 @@ The goal of this notebook is to create a "stream" of CDC changes out of Snowflak
     - Snowflake Task latency will control the lag between Snowflake and Delta.  
 
 
+There is a sample [Delta Live Table pipeline notebook](src/DLT_Pipeline.py), this will complete automate the ingestion process from cloud storage to delta tables that can be accessed as users wish. The DLT pipeline looks something like the following: 
+
+
+<div style="text-align:center"><img src="./docs/imgs/MeltStreamDLT.png"> </div>
+
+
 ## Usage Notes  
 
 This is not a streaming solution and should not be advised as "good" architecture. This is help alliviate the pain of trying to load data out of Snowflake in a scalable and repeatable fashion. This should be considered a solution when re-architecting the data ingestion and data etl process is not up for negotiation but there is a desire to improve the advanced analytics development experience. 
@@ -35,7 +41,7 @@ Required Parameters:
 - snowflake_schema: the schema to which namespace objects (file format, stages, etc) are created in. 
 - stage_name 
 - file_format_name 
-- file_format_type: must be 'json' at this time. 
+- file_format_type: must be `json` at this time. 
 - tables
 
 Optional Namespace Parameters: 
