@@ -45,6 +45,7 @@ streamDF = snowflakeStreamer.read_snowflake_stream(config)
 # display data 
 display(streamDF)
 ```
+<img src="docs/imgs/DisplayData.png">
 
 
 ## Usage Notes  
