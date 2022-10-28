@@ -1,9 +1,9 @@
 from pyspark.sql.functions import *
 from delta.tables import *
 from pyspark.sql.window import Window
-from libs.snowflake_connect import SnowflakeConnect
-from libs.snowflake_namespace import SnowflakeNamespace
-from libs.snowflake_table import SnowflakeTable
+from snowflake_connect import SnowflakeConnect
+from snowflake_namespace import SnowflakeNamespace
+from snowflake_table import SnowflakeTable
 from time import sleep 
 
 
