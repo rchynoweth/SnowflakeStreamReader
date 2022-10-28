@@ -2,8 +2,47 @@
 
 The Snowflake Stream Reader is used to ingest data from Snowflake in near real time. Users can configure a schedule cadence in which Snowflake change data (via Snowflake Streams) is exported as JSON files to cloud storage. At that point the project uses Databricks Auto Loader to ingest the data into delta. 
 
-Developers can read this change data as an append only stream or they can leverage the built in merge functionality to replicate the table from Snowflake to Delta. 
+Developers can read this change data as an append only stream or they can leverage the built in merge functionality to replicate the table from Snowflake to Delta. The basic ask is to provide a framework to read Snowflake data as a stream. This library can also be used in a metadata application that can dynamically manage all ingestion using Delta Live Tables. See [DLTPipeline.py](./docs/samples/DLTPipeline.py)
 
+
+ 
+ ## Installing 
+ This library is intended to only be used with the Databricks runtime and was developed on DBR 10.4 LTS. It is recommned to use DBR 10.4+ but may work on older runtimes as well. 
+
+Currently users must install from this repository. To do so, run `pip install git+https://github.com/rchynoweth/SnowflakeStreamReader.git@main`. 
+
+Once installed, you can connect to Snowflake as a stream with the code below, please see [run_example.py](./docs/samples/run_example.py) for a full notebook. 
+
+```python
+from snowflake_cdc.snowflake_stream_reader import SnowflakeStreamReader
+
+config = {
+ 'file_format_name':'file_format_name', 
+ 'sas_token':'sas_token', #optional, Azure only. Can also provide an existing storage integration name using `storage_integration` option. 
+ 'stage_name':'snowflake_stage',
+ 'storage_account_name':'storage_account_name',
+ 'container_name':'container_name',
+ 'snowflake_database':'snowflake_database', # database to create stage and file format
+ 'snowflake_schema':'snowflake_schema', # schema to create stage and file format 
+ 'additional_path':'stage_path', # optional path for data in storage
+ 'database_name':"table_database", # database the table belongs to
+ 'schema_name':"table_schema", # schema the table belongs to 
+ 'table_name':"table_name", 
+ 'merge_keys':['id'], 
+ 'snowflake_user': 'SF Username',
+ 'snowflake_password': 'SF Password',
+ 'snowflake_account': 'snowflake_account'
+}
+
+# create reader object 
+snowflakeStreamer = SnowflakeStreamReader(spark, dbutils)
+
+# instantiate a streaming DF
+streamDF = snowflakeStreamer.read_snowflake_stream(config)
+
+# display data 
+display(streamDF)
+```
 
 
 ## Usage Notes  
@@ -22,15 +61,6 @@ This is not a streaming solution and should not be advised as "good" architectur
 - This method reduces the total cost of reading data from Snowflake so that it can be used by other tools like Databricks.  
   - Spark connector acquires a double spend (Databricks and Snowflake) and this method is only Snowflake 
   - Other methods may require each user to read the data (i.e. a team of 10 people are reading the same base tables in Snowflake) which means that not only are individuals re-reading data but the entire team is duplicating this effort. Getting data out of Snowflake and into ADLS reduces the number of reads on a table to 1.   
-
- 
- ## Installing 
- This library is intended to only be used with the Databricks runtime and was developed on DBR 10.4 LTS. It is recommned to use DBR 10.4+ but may work on older runtimes as well. 
-
-
-```
-
-```
 
 
 ## Known Limitations 
