@@ -4,8 +4,10 @@ The Snowflake Stream Reader is used to ingest data from Snowflake in near real t
 
 Developers can read this change data as an append only stream or they can leverage the built in merge functionality to replicate the table from Snowflake to Delta. The basic ask is to provide a framework to read Snowflake data as a stream. This library can also be used in a metadata application that can dynamically manage all ingestion using Delta Live Tables. See [DLTPipeline.py](./docs/samples/DLTPipeline.py)
 
+Example DLT Pipeline ingesting data from Snowflake CDC data.  
+<br></br>
+<img src="docs/imgs/MeltStreamDLT.png">
 
- 
  ## Installing 
  This library is intended to only be used with the Databricks runtime and was developed on DBR 10.4 LTS. It is recommned to use DBR 10.4+ but may work on older runtimes as well. 
 
