@@ -4,6 +4,14 @@
 
 # COMMAND ----------
 
+# MAGIC %sh pip freeze
+
+# COMMAND ----------
+
+from src.snowflake_connect import SnowflakeConnect
+
+# COMMAND ----------
+
 from libs.snowflake_connect import SnowflakeConnect
 from libs.snowflake_namespace import SnowflakeNamespace
 from libs.snowflake_table import SnowflakeTable
