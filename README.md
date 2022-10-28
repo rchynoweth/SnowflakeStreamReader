@@ -1,27 +1,19 @@
 # Snowflake Stream Reader
 
+The Snowflake Stream Reader is used to ingest data from Snowflake in near real time. Users can configure a schedule cadence in which Snowflake change data (via Snowflake Streams) is exported as JSON files to cloud storage. At that point the project uses Databricks Auto Loader to ingest the data into delta. 
 
-The Snowflake Spark connector is a great option for reading from and writing data to Snowflake, however, for larger data sizes it can be a bottlenext. It is recommended that for larger data sizes that users instead initial copy to an external stage from Snowflake as files, then use Databricks Auto Loader to read the staged files. This process helps automate this process by setting up CDC streams. If datasets are smaller then full table copies could be more simple.  
+Developers can read this change data as an append only stream or they can leverage the built in merge functionality to replicate the table from Snowflake to Delta. 
 
-The goal of this notebook is to create a "stream" of CDC changes out of Snowflake to cloud storage. It will provide at most two tables:
-1. Append only Delta table of CDC changes 
-    - Please note that we add `load_datetime` to the published files so that we can drop duplicate changes across files  
-1. Delta table that maintains current state using merge keys  
-    - Merging the data from a CDC will replicate Snowflake tables to Delta Lake and will keep the tables consistent. 
-    - Snowflake Task latency will control the lag between Snowflake and Delta.  
-
-
-There is a sample [Delta Live Table pipeline notebook](src/DLT_Pipeline.py), this will complete automate the ingestion process from cloud storage to delta tables that can be accessed as users wish. The DLT pipeline looks something like the following: 
-
-
-<div style="text-align:center"><img src="./docs/imgs/MeltStreamDLT.png"> </div>
 
 
 ## Usage Notes  
 
-This is not a streaming solution and should not be advised as "good" architecture. This is help alliviate the pain of trying to load data out of Snowflake in a scalable and repeatable fashion. This should be considered a solution when re-architecting the data ingestion and data etl process is not up for negotiation but there is a desire to improve the advanced analytics development experience. 
+This is not a streaming solution and should not be advised as "good" architecture. This is help alliviate the pain of trying to unload data out of Snowflake in a scalable and repeatable fashion. This should be considered a solution when re-architecting the data ingestion and data etl process is not possible but there is a desire to improve the advanced analytics development experience. 
 
-- This process is set at the schema level, which means that you will need to have different stages and file formats for each schema you are accessing. 
+- Stages and file formats can be used at the Snowflake account level i.e. you only need one each for all your tables
+- If the provided stage name already exists then the `stagePath` will be ignored as we will not recreate the stage. However, the stagePath MUST match the existing stage definition. In the future we may dynamically check this and update but it does not at this time. 
+- Tasks and Streams are done for each table 
+- The recommended way to create an external stage is to provide a Snowflake Storage Integration name. This integration must already exist in Snowflake in order to be used. If you are using Azure Data Lake Gen2 you can provide a SAS token as an alternative and there is no action required within Snowflake. 
 - By default streams will be named `<table_name>_stream`
 - By default tasks will be named `<table_name>_stream_task`
 - Frequency of data loads:  
@@ -32,139 +24,17 @@ This is not a streaming solution and should not be advised as "good" architectur
   - Other methods may require each user to read the data (i.e. a team of 10 people are reading the same base tables in Snowflake) which means that not only are individuals re-reading data but the entire team is duplicating this effort. Getting data out of Snowflake and into ADLS reduces the number of reads on a table to 1.   
 
  
-## Using a Configuration File   
+ ## Installing 
+ This library is intended to only be used with the Databricks runtime and was developed on DBR 10.4 LTS. It is recommned to use DBR 10.4+ but may work on older runtimes as well. 
 
-Using this framework, engineers can easily create namespace and table objects. The namespace object (`SnowflakeNamespace`) can have a collection of table objects (`SnowflakeTable`). To streamline and make this a more simple process, users can provide a json configuration file that looks like the example below. You will notice that many of the parameters to the database object are provided via widgets in this notebook.   
 
-Required Parameters:
-- snowflake_database: the database to which namespace objects (file format, stages, etc) are created in. 
-- snowflake_schema: the schema to which namespace objects (file format, stages, etc) are created in. 
-- stage_name 
-- file_format_name 
-- file_format_type: must be `json` at this time. 
-- tables
-
-Optional Namespace Parameters: 
-- s3_bucket: aws only
-- storage_account_name: azure only
-- container_name: azure only
-- sas_token: azure only
-- storage_integration: required for aws and optional for azure. If provided then this will be used over the sas_token. 
-
-Optional Table Parameters:
-- enabled: default to true 
-- merge_keys: if they are not provided then append only streams are supported but not able to perform merges 
-
-```json
-{
-    "snowflake_database":"my_database",
-    "snowflake_schema": "my_schema",
-    "stage_name": "my_snowflake_stage_name",
-    "s3_bucket": "my_bucket_name",
-    "storage_account_name": "myadlsgen2", 
-    "container_name": "mystoragecontainer",
-    "additional_path": "/my/dir/in/adls",
-    "sas_token": "storage_sas_token",
-    "storage_integration": "name_of_existing_storage_integration",
-    "file_format_name": "my_snowflake_file_format_name",
-    "file_format_type": "json",
-    "tables": [
-        {
-            "database_name":"my_database",
-            "schema_name":"my_schema",
-            "table_name": "table_name",
-            "merge_keys": ["id"],
-            "task_schedule": "1 MINUTE",
-            "task_warehouse_size": "XSMALL",
-            "enabled": true
-        },
-        {
-            "database_name":"my_database",
-            "schema_name":"my_schema",
-            "name": "table_name2",
-            "merge_keys": ["id"],
-            "task_schedule": "1 MINUTE",
-            "task_warehouse_size": "SMALL",
-            "enabled": false
-        },
-        {
-            "database_name":"my_database",
-            "schema_name":"my_schema",
-            "name": "table_name3",
-            "merge_keys": ["id"],
-            "task_schedule": "5 MINUTE",
-            "task_warehouse_size": "XSMALL",
-            "enabled": true
-        }
-    ]
-}
 ```
-
-
-## Snowflake SQL Example Code 
-
-NOTE - using this repository can help orchstrate and automate this process when given a configuration file.  
-
-In order to "stream" data efficiently out of Snowflake we will need to leverage some of Snowflake's CDC capabilities. This requires creating objects in Snowflake that unload data as files to cloud storage. Once in cloud storage we (Databricks) can use Auto Loader to read the files and write them to Delta. Auto Loader can be used as a DLT Pipeline (which I will **not** be showing here) or the Structured Streaming APIs (which I **will** be showing in this notebook).   
-
-Assuming that you are implementing this process for many tables, this notebook can be used to complete the following **one** time:   
-- Create a Snowflake `FILE FORMAT` of type `JSON`   
-- Create a Snowflake `STAGE` using the `FILE FORMAT` and a Azure Storage SAS token 
-
-For **each table** you want to load this notebook can be used to complete the following:  
-- Create a Snowflake `STREAM` for your table (`<table_name>_stream`)    
-- Create a Snowflake `TASK` to copy CDC data to ADLS Gen2 as json files (`<table_name>_stream_task`)    
-
-```sql
----- SET UP FOR ALL TABLES ----
-
--- Create Database
-CREATE DATABASE IF NOT EXISTS <NAME OF YOUR SNOWFLAKE DATABASE>;
-USE DATABASE <NAME OF YOUR SNOWFLAKE DATABASE>;
--- Create Schema 
-CREATE SCHEMA IF NOT EXISTS <NAME OF YOUR SNOWFLAKE SCHEMA>;
-USE SCHEMA <NAME OF YOUR SNOWFLAKE SCHEMA>;
-
--- Create a json file format to unload data 
-CREATE OR REPLACE FILE FORMAT <NAME OF YOUR FILE FORMAT> 
-TYPE = JSON;
-
--- Create an external stage - this is where I will unload data 
-CREATE OR REPLACE STAGE <NAME OF YOUR STAGE>
-URL = 'azure://<account>.blob.core.windows.net/<container>'
-CREDENTIALS = (AZURE_SAS_TOKEN = '<SAS TOKEN>')
-FILE_FORMAT = <NAME OF YOUR FILE FORMAT>
-;
-
-
----- SET UP FOR EACH TABLE ---- 
-
--- Create a snowflake stream
-CREATE OR REPLACE STREAM <NAME OF YOUR STREAM>
-ON TABLE <NAME OF YOUR TABLE> 
-APPEND_ONLY = FALSE -- gives updates and deletes
-SHOW_INITIAL_ROWS = TRUE ; -- for the initial rows for the first pull then only new/updated rows 
-
--- Create a task that runs every minute 
-CREATE OR REPLACE TASK <NAME OF YOUR TASK> 
-SCHEDULE = '1 MINUTE' -- Change as needed 
-ALLOW_OVERLAPPING_EXECUTION = FALSE -- if they overlap then we may get duplicates from the stream if the previous DML is not complete 
-USER_TASK_MANAGED_INITIAL_WAREHOUSE_SIZE = 'XSMALL' -- using Snowflake Serverless compute 
-AS 
-(
-  COPY INTO @<NAME OF YOUR STAGE>/<STORAGE DIR>/
-  FROM (
-      SELECT OBJECT_CONSTRUCT(*) as row_value FROM (SELECT *, current_timestamp() as load_datetime FROM {table_name}_stream )
-      )
-  include_query_id=true;  -- Ensures that each file we write has a unique name which is required for auto loader  
-)
 
 ```
 
 
-## Limitations 
+## Known Limitations 
 
-- Only supports Azure Data Lake Storage Gen2 as the external stage  
 - Only supports servless tasks in Snowflake 
 - Not all updates to a row are provided but the most recent updates are  
   - Snowflake streams do not provide every transaction that occurs on the row, only the previous record from the last used offset and the most recent version of the record.  
