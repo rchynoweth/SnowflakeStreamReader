@@ -22,7 +22,7 @@ data_path = "abfss://snowflakedemo@racadlsgen2.dfs.core.windows.net/cdc_demo"
 # COMMAND ----------
 
 # DBTITLE 1,List databases, schemas, and tables
-# temporary until python inports work for dlt
+# temporary until python imports work for dlt
 class SnowflakeTable():
   def __init__(self, database_name, schema_name, table_name, merge_keys):
     self.database_name = database_name
@@ -40,23 +40,6 @@ t6 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="t
 t7 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_region", merge_keys=['r_regionkey'])
 t8 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_supplier", merge_keys=['s_suppkey'])
 tables = [t1,t2,t3,t4,t5,t6,t7,t8]
-
-# COMMAND ----------
-
-
-
-
-# merge_keys = microBatchDF.select("merge_keys").first().merge_keys.split(",")  
-# w = Window.partitionBy(merge_keys).orderBy(desc('system_ts'))
-# microBatchDF = (microBatchDF.withColumn("batchId", lit(batchId))
-#                 .withColumnRenamed('METADATA$ISUPDATE', 'METADATA_ISUPDATE')
-#                 .withColumnRenamed('METADATA$ACTION', 'METADATA_ACTION')
-#                 .withColumnRenamed('METADATA$ROW_ID', 'METADATA_ROW_ID')
-#                 .withColumn('group_rank', dense_rank().over(w))
-#                 .filter(col("group_rank")==1)
-#                 .drop("group_rank")
-#                 .drop("merge_keys")
-#                )
 
 # COMMAND ----------
 

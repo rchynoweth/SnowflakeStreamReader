@@ -32,18 +32,14 @@
 # COMMAND ----------
 
 # MAGIC %sh
-# MAGIC pip install snowflake-connector-python
+# MAGIC pip install git+https://github.com/rchynoweth/SnowflakeStreamReader.git@main
 
 # COMMAND ----------
 
-# %pip install 'typing-extensions>=4.3.0'
-
-# COMMAND ----------
-
-from libs.snowflake_connect import SnowflakeConnect
-from libs.snowflake_namespace import SnowflakeNamespace
-from libs.snowflake_table import SnowflakeTable
-from libs.snowflake_stream_reader import SnowflakeStreamReader
+from snowflake_cdc.snowflake_connect import SnowflakeConnect
+from snowflake_cdc.snowflake_namespace import SnowflakeNamespace
+from snowflake_cdc.snowflake_table import SnowflakeTable
+from snowflake_cdc.snowflake_stream_reader import SnowflakeStreamReader
 from time import sleep
 from pyspark.sql.types import *
 from pyspark.sql.functions import *
