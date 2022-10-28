@@ -8,14 +8,13 @@
 
 # COMMAND ----------
 
-from src.snowflake_connect import SnowflakeConnect
+from snowflake_cdc.snowflake_connect import SnowflakeConnect
 
 # COMMAND ----------
 
-from libs.snowflake_connect import SnowflakeConnect
-from libs.snowflake_namespace import SnowflakeNamespace
-from libs.snowflake_table import SnowflakeTable
-from libs.snowflake_stream_reader import SnowflakeStreamReader
+from snowflake_cdc.snowflake_namespace import SnowflakeNamespace
+from snowflake_cdc.snowflake_table import SnowflakeTable
+from snowflake_cdc.snowflake_stream_reader import SnowflakeStreamReader
 
 # COMMAND ----------
 
