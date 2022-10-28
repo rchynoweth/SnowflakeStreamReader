@@ -1,4 +1,5 @@
 import snowflake.connector 
+from time import sleep
 
 class SnowflakeConnect():
   
@@ -23,6 +24,12 @@ class SnowflakeConnect():
   def get_query_status(self, sfqid):
     query_status = self.con.get_query_status(sfqid)
     return query_status
+  
+  
+  def wait_for_query_completion(self, sfqid):
+    while self.con.is_still_running(self.get_query_status(sfqid)):
+      print(f"waiting.... {self.get_query_status(sfqid)}")
+      sleep(1)
   
     
   def create_file_format(self, name, type='JSON'):

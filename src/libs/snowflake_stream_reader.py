@@ -130,18 +130,6 @@ class SnowflakeStreamReader():
       self.spark.sql(f"DROP VIEW IF EXISTS {table_name}_{batchId}_vw")
 
       
-  def initializing_file_system(self, dir_location, wait_time=5):
-    dir = '/'.join(dir_location.split("/")[:-4]) # remove the "/****/**/**/*.json.gz
-    print(f"Initializing..... Monitoring Director {dir}")
-    while True: 
-      try:
-        cnt = len(self.dbutils.fs.ls(dir))
-        if cnt > 0:
-          break
-      except:
-        continue 
-      sleep(wait_time)
-      
       
   def read_snowflake_stream(self, config):
     """
@@ -168,7 +156,9 @@ class SnowflakeStreamReader():
     dir_location = config.get('dir_location') if config.get('dir_location') is not None else self.get_data_path(sfTable, sfNamespace)
     schema_path = config.get('schema_path') if config.get('schema_path') is not None else self.get_table_schema_location(sfTable, sfNamespace)
     
-    self.initializing_file_system(dir_location)
+    task_name = f"{db_name}.{sc_name}.{config.get('table_name')}_stream_task"
+    qid = sfConnect.run_query(f"EXECUTE TASK {task_name}") # initialize the file system
+    sfConnect.wait_for_query_completion(qid) # wait for load to finish
     
     return self.read_append_only_stream(dir_location, schema_path)
     
