@@ -128,25 +128,19 @@ sfNamespace = SnowflakeNamespace(namespace_config)
 # COMMAND ----------
 
 # DBTITLE 1,Add tables to database object 
-t1 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_customer", merge_keys=['c_custkey'])
 t2 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_lineitem", merge_keys=['l_orderkey', 'l_linenumber'])
 t3 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_nation", merge_keys=['n_nationkey'])
 t4 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_orders", merge_keys=['o_orderkey'])
 t5 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_part", merge_keys=['p_partkey'])
 t6 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_partsupp", merge_keys=['ps_partkey', 'ps_suppkey'])
 t7 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_region", merge_keys=['r_regionkey'])
-# t8 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_supplier", merge_keys=['s_suppkey'])
 
-
-
-sfNamespace.add_table(t1)
 sfNamespace.add_table(t2)
 sfNamespace.add_table(t3)
 sfNamespace.add_table(t4)
 sfNamespace.add_table(t5)
 sfNamespace.add_table(t6)
 sfNamespace.add_table(t7)
-# sfNamespace.add_table(t8)
 
 # COMMAND ----------
 
@@ -201,6 +195,9 @@ display(append_df)
 # MAGIC ### Merge CDC Tables - replicates tables in Snowflake
 
 # COMMAND ----------
+
+t1 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_customer", merge_keys=['c_custkey'])
+sfNamespace.add_table(t1)
 
 checkpoint_path = snowflakeStreamer.get_table_checkpoint_location(t1, sfNamespace)
 schema_path = snowflakeStreamer.get_table_schema_location(t1, sfNamespace)
@@ -264,4 +261,8 @@ streamDF = snowflakeStreamer.read_snowflake_stream(config)
 
 # COMMAND ----------
 
-display(streamDF)
+display(streamDF.filter(col("s_suppkey") == 1))
+
+# COMMAND ----------
+
+
