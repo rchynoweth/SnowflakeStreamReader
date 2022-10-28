@@ -61,3 +61,17 @@ alter task test_partsupp_stream_task suspend;
 alter task test_region_stream_task suspend;
 alter task test_supplier_stream_task suspend;
 
+
+
+----- CLEAN UP CODE 
+drop file format if exists rac_json;
+drop stage if exists RAC_EXT_STAGE_DEMO_JSON;
+
+drop task if exists test_customer_stream_task ;
+drop task if exists test_lineitem_stream_task;
+drop task if exists test_nation_stream_task;
+drop task if exists test_orders_stream_task;
+drop task if exists test_part_stream_task;
+drop task if exists test_partsupp_stream_task;
+drop task if exists test_region_stream_task;
+drop task if exists test_supplier_stream_task;

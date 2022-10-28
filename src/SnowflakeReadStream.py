@@ -36,14 +36,14 @@
 
 # COMMAND ----------
 
-# MAGIC %pip install 'typing-extensions>=4.3.0'
+# %pip install 'typing-extensions>=4.3.0'
 
 # COMMAND ----------
 
 from libs.snowflake_connect import SnowflakeConnect
 from libs.snowflake_namespace import SnowflakeNamespace
 from libs.snowflake_table import SnowflakeTable
-from libs.databricks_snowflake_reader import DatabricksSnowflakeReader
+from libs.snowflake_stream_reader import SnowflakeStreamReader
 from time import sleep
 from pyspark.sql.types import *
 from pyspark.sql.functions import *
@@ -61,6 +61,7 @@ dbutils.widgets.text("adlsLocation","")
 dbutils.widgets.text("databricksSchema", "")
 dbutils.widgets.text("fileFormatName", "")
 dbutils.widgets.text("stagePath", "")
+dbutils.widgets.dropdown(name='reset', choices=['YES', "NO"], defaultValue='NO')
 
 # COMMAND ----------
 
@@ -82,8 +83,9 @@ storage_account_name = adls_location.split("/")[2].split("@")[1].replace(".dfs.c
 
 # COMMAND ----------
 
-reset = False 
+reset = True if dbutils.widgets.get('reset') == 'YES' else False
 if reset:
+  print("Resetting ADLS...")
   dbutils.fs.rm(adls_location+"/"+stage_path)
 
 # COMMAND ----------
@@ -95,14 +97,14 @@ spark.sql(f"USE {databricks_schema}")
 # COMMAND ----------
 
 # DBTITLE 1,Create a reader object to read the Snowflake CDC data 
-snowflakeStreamer = DatabricksSnowflakeReader(spark)
+snowflakeStreamer = SnowflakeStreamReader(spark, dbutils)
 
 # COMMAND ----------
 
 # DBTITLE 1,Set Snowflake Credentials and Test Query Connection
 snowflake_creds = {
-  'user': dbutils.secrets.get(secret_scope, 'snowflake_user'),
-  'password': dbutils.secrets.get(secret_scope, 'snowflake_password'),
+  'snowflake_user': dbutils.secrets.get(secret_scope, 'snowflake_user'),
+  'snowflake_password': dbutils.secrets.get(secret_scope, 'snowflake_password'),
   'snowflake_account': snowflake_account
 }
 sfConnect = SnowflakeConnect(snowflake_creds)
@@ -133,7 +135,7 @@ t4 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="t
 t5 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_part", merge_keys=['p_partkey'])
 t6 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_partsupp", merge_keys=['ps_partkey', 'ps_suppkey'])
 t7 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_region", merge_keys=['r_regionkey'])
-t8 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_supplier", merge_keys=['s_suppkey'])
+# t8 = SnowflakeTable(database_name="demo", schema_name="rac_schema",table_name="test_supplier", merge_keys=['s_suppkey'])
 
 
 
@@ -144,7 +146,7 @@ sfNamespace.add_table(t4)
 sfNamespace.add_table(t5)
 sfNamespace.add_table(t6)
 sfNamespace.add_table(t7)
-sfNamespace.add_table(t8)
+# sfNamespace.add_table(t8)
 
 # COMMAND ----------
 
@@ -233,4 +235,33 @@ display(spark.sql(f"select * from {t1.table_name} where c_custkey >= 150000"))
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC ### All in one - Snowflake Data Source 
 
+# COMMAND ----------
+
+config = {
+ 'file_format_name':file_format_name, 
+ 'sas_token':sas_token,
+ 'stage_name':snowflake_stage,
+ 'storage_account_name':storage_account_name,
+ 'container_name':container_name,
+ 'snowflake_database':snowflake_database,
+ 'snowflake_schema':snowflake_schema, 
+ 'additional_path':stage_path,
+ 'database_name':"demo", 
+ 'schema_name':"rac_schema",
+ 'table_name':"test_supplier", 
+ 'merge_keys':['s_suppkey'], 
+ 'snowflake_user': dbutils.secrets.get(secret_scope, 'snowflake_user'),
+ 'snowflake_password': dbutils.secrets.get(secret_scope, 'snowflake_password'),
+ 'snowflake_account': snowflake_account
+}
+
+# COMMAND ----------
+
+streamDF = snowflakeStreamer.read_snowflake_stream(config)
+
+# COMMAND ----------
+
+display(streamDF)

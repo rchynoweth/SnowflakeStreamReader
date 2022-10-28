@@ -4,21 +4,29 @@ class SnowflakeConnect():
   
   def __init__(self, snowflake_creds):
     self.snowflake_creds = snowflake_creds
-    self.con = snowflake.connector.connect(user=snowflake_creds.get('user'),
-                                           password=snowflake_creds.get('password'),
-                                           account=snowflake_creds.get('snowflake_account')
+    self.con = self.get_connection()
+    
+  
+  def get_connection(self):
+    return snowflake.connector.connect(user=self.snowflake_creds.get('snowflake_user'),
+                                           password=self.snowflake_creds.get('snowflake_password'),
+                                           account=self.snowflake_creds.get('snowflake_account')
                                           )
+  def close_connection(self):
+    self.con.close()
     
   def run_query(self, text):
-    return self.con.cursor().execute(text).sfqid
+    rs = self.con.cursor().execute(text)
+    return rs.sfqid
   
   
   def get_query_status(self, sfqid):
-    return self.con.get_query_status(sfqid)
+    query_status = self.con.get_query_status(sfqid)
+    return query_status
   
     
   def create_file_format(self, name, type='JSON'):
-    return self.run_query(f"CREATE OR REPLACE FILE FORMAT {name} TYPE = {type};")
+    return self.run_query(f"CREATE FILE FORMAT IF NOT EXISTS {name} TYPE = {type};")
     
     
   def create_external_azure_stage(self, snowflake_namespace):
@@ -31,7 +39,7 @@ class SnowflakeConnect():
     additional_path = "" if additional_path is None else additional_path 
     
     return self.run_query(f"""
-        CREATE OR REPLACE STAGE {stage_name}
+        CREATE STAGE IF NOT EXISTS {stage_name}
         URL = 'azure://{storage_account_name}.blob.core.windows.net/{container_name}/{additional_path}'
         CREDENTIALS = (AZURE_SAS_TOKEN = '{sas_token}')
         FILE_FORMAT = {file_format_name}
@@ -49,7 +57,7 @@ class SnowflakeConnect():
       stage_url = f's3://{snowflake_namespace.s3_bucket}/{additional_path}'
 
     return self.run_query(f"""
-        CREATE OR REPLACE STAGE {stage_name}
+        CREATE STAGE IF NOT EXISTS {stage_name}
         URL = {stage_url}
         storage_integration = {snowflake_namespace.storage_integration}
         FILE_FORMAT = {snowflake_namespace.file_format_name}
@@ -62,7 +70,7 @@ class SnowflakeConnect():
     table_name = snowflake_table.table_name 
     
     return self.run_query(f"""
-        CREATE OR REPLACE STREAM {database_name}.{schema_name}.{table_name}_stream
+        CREATE STREAM IF NOT EXISTS {database_name}.{schema_name}.{table_name}_stream
         ON TABLE {database_name}.{schema_name}.{table_name} 
         APPEND_ONLY = FALSE -- gives updates and deletes
         SHOW_INITIAL_ROWS = TRUE ; -- for the initial rows for the first pull then only new/updated rows 
@@ -102,7 +110,6 @@ class SnowflakeConnect():
       stage_query_id = self.create_external_azure_stage(snowflake_namespace)
     elif snowflake_namespace.storage_integration is not None:
       stage_query_id = self.create_external_stage(snowflake_namespace)
-
     
     return file_query_id, stage_query_id
   

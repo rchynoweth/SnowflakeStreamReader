@@ -1,12 +1,18 @@
 from pyspark.sql.functions import *
 from delta.tables import *
 from pyspark.sql.window import Window
+from libs.snowflake_connect import SnowflakeConnect
+from libs.snowflake_namespace import SnowflakeNamespace
+from libs.snowflake_table import SnowflakeTable
+from time import sleep 
 
 
-class DatabricksSnowflakeReader():
+
+class SnowflakeStreamReader():
   
-  def __init__(self, spark):
+  def __init__(self, spark, dbutils):
     self.spark = spark
+    self.dbutils = dbutils 
   
   def get_table_schema_location(self, snowflake_table, snowflake_namespace):
     schema_location = f"abfss://{snowflake_namespace.container_name}@{snowflake_namespace.storage_account_name}.dfs.core.windows.net/" + \
@@ -116,7 +122,6 @@ class DatabricksSnowflakeReader():
             UPDATE SET {}
         -- deletes 
         WHEN MATCHED and source.METADATA_ACTION = 'DELETE' and source.METADATA_ISUPDATE = FALSE THEN DELETE 
-
         -- inserts 
         WHEN NOT MATCHED and source.METADATA_ACTION = 'INSERT' and source.METADATA_ISUPDATE = FALSE THEN INSERT ( {} ) values ( {} ) 
       """.format(table_name, table_name, batchId, key_string, update_string, insert_cols, insert_string) )
@@ -124,5 +129,91 @@ class DatabricksSnowflakeReader():
       # Drop the temp view - likely unnecessary 
       self.spark.sql(f"DROP VIEW IF EXISTS {table_name}_{batchId}_vw")
 
+      
+  def initializing_file_system(self, dir_location, wait_time=5):
+    dir = '/'.join(dir_location.split("/")[:-4]) # remove the "/****/**/**/*.json.gz
+    print(f"Initializing..... Monitoring Director {dir}")
+    while True: 
+      try:
+        cnt = len(self.dbutils.fs.ls(dir))
+        if cnt > 0:
+          break
+      except:
+        continue 
+      sleep(wait_time)
+      
+      
+  def read_snowflake_stream(self, config):
+    """
+    Function to setup and read a table from snowflake as a stream. This funciton allows the user to specify a single table to read from Snowflake 
+    and will automatically create (if they don't exist) all the required objects in Snowflake.  
+    
+    This is a function that would be similar to doing `spark.readStream.format('cloudFiles').option('cloudFiles.format', 'snowflake').`
+    Instead we can do `snowflakeStreamer.read_cloudFiles_snowflake(config)`. 
+    """
+    db_name = config.get('database_name') if config.get('database_name') is not None else config.get('snowflake_database')
+    sc_name = config.get('schema_name') if config.get('schema_name') is not None else config.get('snowflake_schema')
+    
+    snowflake_creds = {'snowflake_user': config.get('snowflake_user'), 'snowflake_password': config.get('snowflake_password'), 'snowflake_account': config.get('snowflake_account')}
+    sfConnect = SnowflakeConnect(snowflake_creds)
+    
+    sfTable = SnowflakeTable(database_name=db_name, schema_name=sc_name, table_name=config.get('table_name'), merge_keys=config.get("merge_keys"))
+    
+    sfNamespace = SnowflakeNamespace(config)
+    sfNamespace.add_table(sfTable)
+    file_query_id, stage_query_id = sfConnect.account_setup(sfNamespace) 
+    
+    sfConnect.table_setup(sfTable, sfNamespace)
+
+    dir_location = config.get('dir_location') if config.get('dir_location') is not None else self.get_data_path(sfTable, sfNamespace)
+    schema_path = config.get('schema_path') if config.get('schema_path') is not None else self.get_table_schema_location(sfTable, sfNamespace)
+    
+    self.initializing_file_system(dir_location)
+    
+    return self.read_append_only_stream(dir_location, schema_path)
+    
 
 
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

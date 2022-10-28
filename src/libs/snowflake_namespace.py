@@ -18,7 +18,8 @@ class SnowflakeNamespace():
     self.set_tables(config.get('tables')) 
     
     self.set_stage_details(config)
-    
+ 
+
   def set_stage_details(self, config):
     # storage information - Azure
     self.sas_token=config.get('sas_token') 
@@ -28,7 +29,6 @@ class SnowflakeNamespace():
     # storage information - all clouds
     self.storage_integration = config.get('storage_aws_role_arn')
 
-
     
   def set_tables(self, table_list):
     self.tables = {}
@@ -37,21 +37,23 @@ class SnowflakeNamespace():
         key = f"{t.database_name}__{t.schema_name}__{t.table_name}"
         self.tables[key] = t
         
+        
   def add_table(self, snowflake_table):
     key = f"{snowflake_table.database_name}__{snowflake_table.schema_name}__{snowflake_table.table_name}"
     self.tables[key] = snowflake_table
+    
     
   def get_table(self, database_name, schema_name, table_name):
     key = f"{database_name}__{schema_name}__{table_name}"
     self.tables.get(table_name)
     
+    
   def delete_table(self, database_name, schema_name, table_name):
     key = f"{database_name}__{schema_name}__{table_name}"
     self.tables.pop(key, None)
 
+    
   def update_table(self, snowflake_table):
     key = f"{snowflake_table.database_name}__{snowflake_table.schema_name}__{snowflake_table.table_name}"
     self.tables[key] = snowflake_table
     
-#   def update_table_item(self, table_name, key, value):
-#     self.tables[table_name][key] = value
