@@ -39,8 +39,8 @@ Using this framework, engineers can easily create namespace and table objects. T
 Required Parameters:
 - snowflake_database: the database to which namespace objects (file format, stages, etc) are created in. 
 - snowflake_schema: the schema to which namespace objects (file format, stages, etc) are created in. 
-- stage_name 
-- file_format_name 
+- stage_name: created if it does not exist 
+- file_format_name: created if does not exist 
 - file_format_type: must be `json` at this time. 
 - tables
 
@@ -48,8 +48,9 @@ Optional Namespace Parameters:
 - s3_bucket: aws only
 - storage_account_name: azure only
 - container_name: azure only
-- sas_token: azure only
+- sas_token: optional and azure only
 - storage_integration: required for aws and optional for azure. If provided then this will be used over the sas_token. 
+- additional_path: path suffix for sub-directorys in the bucket/container 
 
 Optional Table Parameters:
 - enabled: default to true 
@@ -99,6 +100,20 @@ Optional Table Parameters:
     ]
 }
 ```
+
+### Data Layout
+
+The layout of data in cloud storage is pre-determined and is parameterized by the user. In this examples we will use an Azure storage account, it is important to note that S3 and GCS will map to the container in Azure.  
+
+Data is published in the following format: 
+- Storage Account Name: `storage_account_name`
+- Container Name: `container_name`
+- Additional Path: `/my/dir/`
+- Snowflake Table: `my_database.my_schema.my_table`
+- Published Location: `abfss://container_name@storage_account_name.dfs.core.windows.net/my/dir/my_database/my_schema/my_table/year=yyyy/month=mm/day=dd`.
+  - The year, month, and day directories are set by the datetime when unloading the data. This is currently not configurable. 
+
+
 
 
 ## Snowflake SQL Example Code 

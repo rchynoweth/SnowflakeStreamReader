@@ -15,6 +15,29 @@ Currently users must install from this repository. To do so, run `pip install gi
 
 Once installed, you can connect to Snowflake as a stream with the code below, please see [run_example.py](./docs/samples/run_example.py) for a full notebook. 
 
+
+Required Parameters:
+- snowflake_database: the database to which namespace objects (file format, stages, etc) are created in. 
+- snowflake_schema: the schema to which namespace objects (file format, stages, etc) are created in. 
+- stage_name: created if it does not exist 
+- file_format_name: created if does not exist 
+- file_format_type: must be `json` at this time. 
+- tables
+
+Optional Namespace Parameters: 
+- s3_bucket: aws only
+- storage_account_name: azure only
+- container_name: azure only
+- sas_token: optional and azure only
+- storage_integration: required for aws and optional for azure. If provided then this will be used over the sas_token. 
+- additional_path: path suffix for sub-directorys in the bucket/container 
+
+Optional Table Parameters:
+- enabled: default to true 
+- merge_keys: if they are not provided then append only streams are supported but not able to perform merges 
+
+
+
 ```python
 from snowflake_cdc.snowflake_stream_reader import SnowflakeStreamReader
 
@@ -47,6 +70,17 @@ display(streamDF)
 ```
 <img src="docs/imgs/DisplayData.png">
 
+### Data Layout
+
+The layout of data in cloud storage is pre-determined and is parameterized by the user. In this examples we will use an Azure storage account, it is important to note that S3 and GCS will map to the container in Azure.  
+
+Data is published in the following format: 
+- Storage Account Name: `storage_account_name`
+- Container Name: `container_name`
+- Additional Path: `/my/dir/`
+- Snowflake Table: `my_database.my_schema.my_table`
+- Published Location: `abfss://container_name@storage_account_name.dfs.core.windows.net/my/dir/my_database/my_schema/my_table/year=yyyy/month=mm/day=dd`.
+  - The year, month, and day directories are set by the datetime when unloading the data. This is currently not configurable. 
 
 ## Usage Notes  
 
@@ -78,9 +112,9 @@ This is not a streaming solution and should not be advised as "good" architectur
 
 ## Costs 
 
-The main costs associated with this library takes the form of Databricks and Snowflake compute. Snowflake will unload data regularly using a warehouse which has cost associated and Databricks will run to load data from cloud storage. However, I would like to highlight the following:
-- Snowflake streams may incur additional storage costs due to an extended data retention periods.  
-- Snowflake tasks are billed per-second and depend on the runtime and Snowflake warehouse size. The default for this library is to use Snowflake serverless which incurs a 1.5x multiplier to resource consumption.  
+The main costs associated with this process is Databricks and Snowflake compute. Snowflake will unload data regularly using a warehouse which has cost associated and Databricks will run clusters to load data from cloud storage. However, I would like to highlight the following:
+- Snowflake streams may incur additional storage costs due to an extended data retention periods.
+- Snowflake tasks are billed per-second and depend on the runtime and Snowflake warehouse size. The default is to use Snowflake serverless which incurs a 1.5x multiplier to resource consumption compared to a virtual warehouse.  
 - Delta Live Tables (optional) - has different pricing than jobs compute. Please reference this [pricing page](https://www.databricks.com/product/delta-live-tables-pricing-azure).  
 
 
