@@ -4,9 +4,9 @@ The Snowflake Stream Reader is used to ingest data from Snowflake in near real t
 
 Developers can read this change data as an append only stream or they can leverage the built in merge functionality to replicate the table from Snowflake to Delta. The basic ask is to provide a framework to read Snowflake data as a stream. This library can also be used in a metadata application that can dynamically manage all ingestion using Delta Live Tables. See [DLTPipeline.py](./docs/samples/DLTPipeline.py)
 
-Example DLT Pipeline ingesting data from Snowflake CDC data.  
-<br></br>
-<img src="docs/imgs/MeltStreamDLT.png">
+The high level process can be described with the visual below. 
+
+<img src="docs/imgs/SnowflakeStreamReaderArchitecture.jpeg"/>
 
  ## Installing 
  This library is intended to only be used with the Databricks runtime and was developed on DBR 10.4 LTS. It is recommned to use DBR 10.4+ but may work on older runtimes as well. 
@@ -76,6 +76,16 @@ This is not a streaming solution and should not be advised as "good" architectur
 - Custom naming of tasks and streams is not supported. All streams will have `<table_name>_stream` and all tasks will have `<table_name>_stream_task`  
 
 
+## Costs 
+
+The main costs associated with this library takes the form of Databricks and Snowflake compute. Snowflake will unload data regularly using a warehouse which has cost associated and Databricks will run to load data from cloud storage. However, I would like to highlight the following:
+- Snowflake streams may incur additional storage costs due to an extended data retention periods.  
+- Snowflake tasks are billed per-second and depend on the runtime and Snowflake warehouse size. The default for this library is to use Snowflake serverless which incurs a 1.5x multiplier to resource consumption.  
+- Delta Live Tables (optional) - has different pricing than jobs compute. Please reference this [pricing page](https://www.databricks.com/product/delta-live-tables-pricing-azure).  
+
+
+Please reference [Snowflake Streams Billing](https://docs.snowflake.com/en/user-guide/streams-intro.html#billing-for-streams), [Snowflake Task Billing](https://docs.snowflake.com/en/user-guide/tasks-intro.html#billing-for-task-runs), [Snowflake pricing](https://www.snowflake.com/pricing/), and [Databricks Pricing](https://www.databricks.com/product/aws-pricing).   
+
 
 ## Development 
-Please submit feature requests and issues through github. 
+Please submit feature requests and issues through GitHub. 
