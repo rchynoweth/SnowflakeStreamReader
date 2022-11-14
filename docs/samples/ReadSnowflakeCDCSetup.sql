@@ -43,11 +43,14 @@ SHOW_INITIAL_ROWS = TRUE ; -- for the initial rows for the first pull then only 
 select * from rac_test_stream;
 
 -- unload data to the stage 
-copy into @rac_ext_stage_demo_parquet/cdc_unload/
-from (
-select * from rac_test_stream
-    )
+-- @{stage_name}/{path_value}/{database_name}/{schema_name}/{table_name}
+copy into @rac_ext_stage_demo_parquet/cdc_unload/demo/rac_schema/rac_test_stream
+FROM (
+  SELECT OBJECT_CONSTRUCT(*) as row_value FROM (SELECT *, current_timestamp() as load_datetime FROM rac_test_stream )
+  )
+PARTITION BY ('year=' || to_varchar(current_date(), 'YYYY') || '/month=' || to_varchar(current_date(), 'MM') || '/day=' || to_varchar(current_date(), 'DD')) -- set it up in the /yyyy/mm/dd format for autoloader
 include_query_id=true ; -- ensures unique file names 
+
     
 -- NOTICE - streams are automatically incremented 
 SELECT * FROM rac_test_stream;
@@ -64,12 +67,15 @@ DELETE FROM test_stream_table WHERE id = 2;
 
 SELECT * FROM rac_test_stream;
 
--- Unload data to the stage 
-copy into @rac_ext_stage_demo_parquet/cdc_unload/
-from (
-select * from rac_test_stream
-    )
-include_query_id=true; -- ensures unique files names 
+-- unload data to the stage 
+-- @{stage_name}/{path_value}/{database_name}/{schema_name}/{table_name}
+copy into @rac_ext_stage_demo_parquet/cdc_unload/demo/rac_schema/rac_test_stream
+FROM (
+  SELECT OBJECT_CONSTRUCT(*) as row_value FROM (SELECT *, current_timestamp() as load_datetime FROM rac_test_stream )
+  )
+PARTITION BY ('year=' || to_varchar(current_date(), 'YYYY') || '/month=' || to_varchar(current_date(), 'MM') || '/day=' || to_varchar(current_date(), 'DD')) -- set it up in the /yyyy/mm/dd format for autoloader
+include_query_id=true ; -- ensures unique file names 
+
 
 
 SELECT * FROM rac_test_stream;
@@ -95,19 +101,13 @@ ALLOW_OVERLAPPING_EXECUTION = FALSE
 -- WAREHOUSE = 'DEMO_WH'
 USER_TASK_MANAGED_INITIAL_WAREHOUSE_SIZE = 'XSMALL'
 AS 
-    copy into @rac_ext_stage_demo_parquet/cdc_unload/
-    from (
-    select * from rac_test_stream
-        )
-    include_query_id=true;    
+copy into @rac_ext_stage_demo_parquet/cdc_unload/demo/rac_schema/rac_test_stream
+FROM (
+  SELECT OBJECT_CONSTRUCT(*) as row_value FROM (SELECT *, current_timestamp() as load_datetime FROM rac_test_stream )
+  )
+PARTITION BY ('year=' || to_varchar(current_date(), 'YYYY') || '/month=' || to_varchar(current_date(), 'MM') || '/day=' || to_varchar(current_date(), 'DD')) -- set it up in the /yyyy/mm/dd format for autoloader
+include_query_id=true ; -- ensures unique file names   
 
-
-DESCRIBE TASK rac_test_data_cdc_unload ;
-
-select *
-from table(information_schema.task_history())
-where name = 'RAC_TEST_DATA_CDC_UNLOAD'
-order by query_start_time desc;
 
 
 alter task if exists rac_test_data_cdc_unload resume;

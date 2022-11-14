@@ -43,10 +43,6 @@ storage_account_name = adls_location.split("/")[2].split("@")[1].replace(".dfs.c
 
 # COMMAND ----------
 
-#%sh pip install typing-extensions>=4.3.0
-
-# COMMAND ----------
-
 # DBTITLE 1,Test Connection to Snowflake 
 snowflake_creds = {
   'snowflake_user': dbutils.secrets.get(secret_scope, 'snowflake_user'),
