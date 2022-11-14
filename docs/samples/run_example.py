@@ -14,6 +14,7 @@ from snowflake_cdc.snowflake_stream_reader import SnowflakeStreamReader
 
 dbutils.widgets.text("secretScope", "")
 dbutils.widgets.text("snowflakeAccount", "") # https://<snowflake_account>.snowflakecomputing.com/ 
+dbutils.widgets.text("snowflakeWarehouse", "")
 dbutils.widgets.text("snowflakeDatabase", "")
 dbutils.widgets.text("snowflakeSchema", "")
 dbutils.widgets.text("snowflakeStage", "")
@@ -26,6 +27,7 @@ dbutils.widgets.text("stagePath", "")
 
 secret_scope = dbutils.widgets.get("secretScope")
 snowflake_account = dbutils.widgets.get("snowflakeAccount")
+snowflake_warehouse = dbutils.widgets.get("snowflakeWarehouse")
 snowflake_database = dbutils.widgets.get("snowflakeDatabase")
 snowflake_schema = dbutils.widgets.get("snowflakeSchema")
 snowflake_stage = dbutils.widgets.get("snowflakeStage")
@@ -41,11 +43,16 @@ storage_account_name = adls_location.split("/")[2].split("@")[1].replace(".dfs.c
 
 # COMMAND ----------
 
+#%pip install typing-extensions>=4.3.0
+
+# COMMAND ----------
+
 # DBTITLE 1,Test Connection to Snowflake 
 snowflake_creds = {
   'snowflake_user': dbutils.secrets.get(secret_scope, 'snowflake_user'),
   'snowflake_password': dbutils.secrets.get(secret_scope, 'snowflake_password'),
-  'snowflake_account': snowflake_account
+  'snowflake_account': snowflake_account,
+  'snowflake_warehouse': snowflake_warehouse
 }
 sfConnect = SnowflakeConnect(snowflake_creds)
 sfConnect.run_query("select 1 ")

@@ -8,8 +8,8 @@ The high level process can be described with the visual below. Please note that 
 
 <img src="docs/imgs/SnowflakeStreamReaderArchitecture.jpeg"/>
 
- ## Installing 
- This library is intended to only be used with the Databricks runtime and was developed on DBR 10.4 LTS. It is recommned to use DBR 10.4+ but may work on older runtimes as well. 
+## Installing 
+This library is intended to only be used with the Databricks runtime and was developed on DBR 10.4 LTS. It is recommned to use DBR 10.4+ but may work on older runtimes as well. **This repository is intended to be a demo on how to efficiently get data out of Snowflake and is not necessarily for production use.**  
 
 Currently users must install from this repository. To do so, run `pip install git+https://github.com/rchynoweth/SnowflakeStreamReader.git@main`. 
 
@@ -22,7 +22,7 @@ Required Parameters:
 - stage_name: created if it does not exist 
 - file_format_name: created if does not exist 
 - file_format_type: must be `json` at this time. 
-- tables
+- tables: json list of tables to load from Snowflake
 
 Optional Namespace Parameters: 
 - s3_bucket: aws only

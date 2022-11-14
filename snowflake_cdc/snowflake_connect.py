@@ -10,8 +10,9 @@ class SnowflakeConnect():
   
   def get_connection(self):
     return snowflake.connector.connect(user=self.snowflake_creds.get('snowflake_user'),
-                                           password=self.snowflake_creds.get('snowflake_password'),
-                                           account=self.snowflake_creds.get('snowflake_account')
+                                       password=self.snowflake_creds.get('snowflake_password'),
+                                       account=self.snowflake_creds.get('snowflake_account'),
+                                       warehouse=self.snowflake_creds.get('snowflake_warehouse')
                                           )
   def close_connection(self):
     self.con.close()

@@ -4,7 +4,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
     
 install_reqs = [
-  'snowflake-connector-python'
+  'snowflake-connector-python==2.8.1',
+  'typing-extensions>=4.3.0'
 ]
 
 setuptools.setup(
