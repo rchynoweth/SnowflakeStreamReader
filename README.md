@@ -102,6 +102,7 @@ This is not a streaming solution and should not be advised as "good" architectur
 
 ## Known Limitations 
 
+- Single Snowflake Stage and Snowflake File Format per configuration setting.  
 - Only supports servless tasks in Snowflake 
 - Not all updates to a row are provided but the most recent updates are  
   - Snowflake streams do not provide every transaction that occurs on the row, only the previous record from the last used offset and the most recent version of the record.  

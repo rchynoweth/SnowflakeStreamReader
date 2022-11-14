@@ -3,8 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-src/=4.3.0
+docs/samples/=4.3.0
 *.DS_Store
+*.vscode
+*.metals
 
 # C extensions
 *.so

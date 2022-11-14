@@ -1,3 +1,12 @@
+-------------------- 
+-- This notebook should be used as Demo code to show how this can replicate data in Delta with various operations. 
+-- 1. Create database and schema 
+-- 2. Create Tables 
+-- 3. Make inserts, updates, and deletes
+-- 4. Clean up objects and stop tasks 
+
+
+
 ---- CREATE BASE OBJECTS
 use demo;
 use schema rac_schema; 
