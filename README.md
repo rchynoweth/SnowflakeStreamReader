@@ -109,7 +109,8 @@ This is not a streaming solution and should not be advised as "good" architectur
   - For example, if a row is updated multiple times in between executions then only the last change is provided  
   - If this is unacceptable then users can use a `changes` clause which will allow users to manually implement CDC operations between table versions in Snowflake, but please note that the offsets are not managed by Snowflake.   
 - Custom naming of tasks and streams is not supported. All streams will have `<table_name>_stream` and all tasks will have `<table_name>_stream_task`  
-
+- We use the [Python Connector for Snowflake](https://docs.snowflake.com/en/user-guide/python-connector-example.html#connecting-to-snowflake) to execute SQL commands in a Snowflake account. Currently we support the following authentication parameters: `user`, `password`, `account`, `warehouse`, `database`, and `schema`. See [run_example.py](docs/samples/run_example.py) 
+  - Submit a GitHub issue for additional authentication requirements that are supported by the connector and we will add on a request basis.  
 
 ## Costs 
 

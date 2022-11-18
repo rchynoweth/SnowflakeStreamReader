@@ -10,9 +10,11 @@ class SnowflakeConnect():
   
   def get_connection(self):
     return snowflake.connector.connect(user=self.snowflake_creds.get('snowflake_user'),
-                                       password=self.snowflake_creds.get('snowflake_password'),
-                                       account=self.snowflake_creds.get('snowflake_account'),
-                                       warehouse=self.snowflake_creds.get('snowflake_warehouse')
+                                        password=self.snowflake_creds.get('snowflake_password'),
+                                        account=self.snowflake_creds.get('snowflake_account'),
+                                        warehouse=self.snowflake_creds.get('snowflake_warehouse'),
+                                        database=self.snowflake_creds.get('snowflake_database'),
+                                        schema=self.snowflake_creds.get('snowflake_schema')
                                           )
   def close_connection(self):
     self.con.close()
@@ -60,12 +62,12 @@ class SnowflakeConnect():
     stage_url = ""
     
     if (snowflake_namespace.container_name is not None) and (snowflake_namespace.storage_account_name is not None): # this means it is azure 
-      stage_url = f'azure://{storage_account_name}.blob.core.windows.net/{container_name}/{additional_path}'
+      stage_url = f'azure://{snowflake_namespace.storage_account_name}.blob.core.windows.net/{snowflake_namespace.container_name}/{additional_path}'
     elif snowflake_namespace.s3_bucket is not None: # aws 
       stage_url = f's3://{snowflake_namespace.s3_bucket}/{additional_path}'
 
     return self.run_query(f"""
-        CREATE STAGE IF NOT EXISTS {stage_name}
+        CREATE STAGE IF NOT EXISTS {snowflake_namespace.stage_name}
         URL = {stage_url}
         storage_integration = {snowflake_namespace.storage_integration}
         FILE_FORMAT = {snowflake_namespace.file_format_name}
