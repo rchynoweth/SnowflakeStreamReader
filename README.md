@@ -1,6 +1,6 @@
 # Snowflake Stream Reader
 
-The Snowflake Stream Reader is used to ingest data from Snowflake in near real time. Users can configure a schedule cadence in which Snowflake change data (via Snowflake Streams) is exported as JSON files to cloud storage. At that point the project uses Databricks Auto Loader to ingest the data into delta. 
+The Snowflake Stream Reader is used to ingest data from Snowflake in a cdc fashion. Users can configure a schedule cadence in which Snowflake change data (via Snowflake Streams) is exported as JSON files to cloud storage. At that point the project uses Databricks Auto Loader to ingest the data into delta. 
 
 Developers can read this change data as an append only stream or they can leverage the built in merge functionality to replicate the table from Snowflake to Delta. The basic ask is to provide a framework to read Snowflake data as a stream. This library can also be used in a metadata application that can dynamically manage all ingestion using Delta Live Tables. See [DLTPipeline.py](./docs/samples/DLTPipeline.py)
 
