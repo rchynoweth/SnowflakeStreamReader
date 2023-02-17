@@ -1,6 +1,6 @@
 class SnowflakeTable():
   
-  def __init__(self, database_name, schema_name, table_name, merge_keys=None, task_schedule='1 MINUTE', task_warehouse_size='XSMALL', enabled=True):
+  def __init__(self, database_name, schema_name, table_name, merge_keys=['METADATA$ROW_ID'], task_schedule='1 MINUTE', task_warehouse_size='XSMALL', enabled=True):
     self.database_name = database_name
     self.schema_name = schema_name
     self.table_name = table_name 

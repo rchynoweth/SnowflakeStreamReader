@@ -34,7 +34,10 @@ Optional Namespace Parameters:
 
 Optional Table Parameters:
 - enabled: default to true 
-- merge_keys: if they are not provided then append only streams are supported but not able to perform merges 
+- merge_keys: default to `METADATA$ROW_ID`. 
+  - PLEASE NOTE: 
+    - Snowflake Streams provide a hidden column `METADATA$ROW_ID` which allows for merges. This is the default option. 
+    - If you provide a null value or empty list for the merge_keys parameter then it will not be able to perform a merge. 
 
 
 
@@ -105,6 +108,7 @@ This is not a streaming solution and should not be advised as "good" architectur
 - Single Snowflake Stage and Snowflake File Format per configuration setting.  
 - Only supports servless tasks in Snowflake 
 - Not all updates to a row are provided but the most recent updates are  
+  - I believe this is because Snowflake does table version differentials which are an expensive operation that do not provide transactional level change data.  
   - Snowflake streams do not provide every transaction that occurs on the row, only the previous record from the last used offset and the most recent version of the record.  
   - For example, if a row is updated multiple times in between executions then only the last change is provided  
   - If this is unacceptable then users can use a `changes` clause which will allow users to manually implement CDC operations between table versions in Snowflake, but please note that the offsets are not managed by Snowflake.   
