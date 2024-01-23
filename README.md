@@ -1,3 +1,5 @@
+**This repository is intended to be a demo on how to efficiently get data out of Snowflake and is not necessarily for production use.** While the repository is not updated frequently it is still applicable. 
+
 # Snowflake Stream Reader
 
 The Snowflake Stream Reader is used to ingest data from Snowflake in a cdc fashion. Users can configure a schedule cadence in which Snowflake change data (via Snowflake Streams) is exported as JSON files to cloud storage. At that point the project uses Databricks Auto Loader to ingest the data into delta. 
