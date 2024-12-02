@@ -4,7 +4,7 @@
 
 The Snowflake Stream Reader is used to ingest data from Snowflake in a cdc fashion. Users can configure a schedule cadence in which Snowflake change data (via Snowflake Streams) is exported as JSON files to cloud storage. At that point the project uses Databricks Auto Loader to ingest the data into delta. 
 
-Developers can read this change data as an append only stream or they can leverage the built in merge functionality to replicate the table from Snowflake to Delta. The basic ask is to provide a framework to read Snowflake data as a stream. This library can also be used in a metadata application that can dynamically manage all ingestion using Delta Live Tables. See [DLTPipeline.py](./docs/samples/DLTPipeline.py)
+Developers can read this change data as an append only stream or they can leverage the built in merge functionality to replicate the table from Snowflake to Delta. The basic ask is to provide a framework to read Snowflake data as a stream. This library can also be used in a metadata application that can dynamically manage all ingestion using Delta Live Tables. See [DLTPipeline.py](https://github.com/rchynoweth/SnowflakeStreamReader/blob/main/docs/samples/DLTPipeline.py)
 
 The high level process can be described with the visual below. Please note that the process between Snowflake and Databricks is decoupled, meaning that if the Databricks stream is cancelled then Snowflake will continue publishing JSON files to cloud storage unless the associated task is explicitly suspended.  
 
@@ -15,7 +15,7 @@ This library is intended to only be used with the Databricks runtime and was dev
 
 Currently users must install from this repository. To do so, run `pip install git+https://github.com/rchynoweth/SnowflakeStreamReader.git@main`. 
 
-Once installed, you can connect to Snowflake as a stream with the code below, please see [run_example.py](./docs/samples/run_example.py) for a full notebook. 
+Once installed, you can connect to Snowflake as a stream with the code below, please see [run_example.py](https://github.com/rchynoweth/SnowflakeStreamReader/blob/main/docs/samples/run_example.py) for a full notebook. 
 
 
 Required Parameters:
